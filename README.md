@@ -1,0 +1,1 @@
+Script to retrieve image data from the provided metadata of the [Siegelsammlung Paul Arnold Grun](https://sammlungen.uni-goettingen.de/sammlung/slg_1034/) ([CDV](https://codingdavinci.de/de/daten/siegelsammlung-paul-arnold-grun))
