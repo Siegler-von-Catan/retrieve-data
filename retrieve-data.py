@@ -37,17 +37,25 @@ def _retrieve_image(args, metadata_file):
 
         image_url = root.find(
             "lido:administrativeMetadata/lido:resourceWrap/lido:resourceSet/"
-            "lido:resourceRepresentation/lido:linkResource", ns).text
+            "lido:resourceRepresentation/lido:linkResource",
+            ns,
+        ).text
 
         response = requests.get(image_url, stream=True)
-        image_filename = metadata_file.split(
-            ".")[0] + "-img." + image_url.split(".")[-1]
+        image_filename = (
+            metadata_file.split(".")[0] + "-img." + image_url.split(".")[-1]
+        )
         with open(path.join(args.output_dir, image_filename), "wb") as image_file:
             for data in response.iter_content():
                 image_file.write(data)
 
     except Exception as e:
-        raise Exception("Failed at metadata file " + metadata_file) from e
+        error_message = "Failed at metadata file " + metadata_file
+        if args.no_exception:
+            print(error_message)
+            return
+        else:
+            raise Exception("Failed at metadata file " + metadata_file) from e
 
 
 if __name__ == "__main__":
@@ -55,11 +63,18 @@ if __name__ == "__main__":
 
     parser.add_argument(
         "metadata_dir",
-        help="Directory containing the metadata XML files for the dataset")
+        help="Directory containing the metadata XML files for the dataset",
+    )
+    parser.add_argument("output_dir", help="Destination directory for the data")
     parser.add_argument(
-        "output_dir", help="Destination directory for the data")
-    parser.add_argument("-j", "--jobs", type=int, default=1,
-                        help="Number of simultaneous jobs")
+        "-j", "--jobs", type=int, default=1, help="Number of simultaneous jobs"
+    )
+    parser.add_argument(
+        "--no_exception",
+        default=False,
+        action="store_true",
+        help="If a failed file should through an exception or not",
+    )
 
     args = parser.parse_args()
 
@@ -68,5 +83,10 @@ if __name__ == "__main__":
     metadata_files = os.listdir(args.metadata_dir)
     retrieve_image = partial(_retrieve_image, args)
     with Pool(args.jobs) as p:
-        list(tqdm(p.imap(retrieve_image, metadata_files),
-                  total=len(metadata_files), desc="Retrieving images"))
+        list(
+            tqdm(
+                p.imap(retrieve_image, metadata_files),
+                total=len(metadata_files),
+                desc="Retrieving images",
+            )
+        )
